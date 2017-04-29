@@ -1,15 +1,15 @@
-semver(1) -- The semantic versioner for npm
-===========================================
+semver(1) -- npm 语义化版本工具
+=============================
 
-## Install
+## 安装
 
 ```bash
 npm install --save semver
 ````
 
-## Usage
+## 用法
 
-As a node module:
+用作模块：
 
 ```js
 const semver = require('semver')
@@ -22,7 +22,7 @@ semver.gt('1.2.3', '9.8.7') // false
 semver.lt('1.2.3', '9.8.7') // true
 ```
 
-As a command-line utility:
+用作命令行工具：
 
 ```
 $ semver -h
@@ -61,206 +61,174 @@ Versions are printed in ascending order, so supplying
 multiple versions to the utility will just sort them.
 ```
 
-## Versions
+## 版本
 
-A "version" is described by the `v2.0.0` specification found at
-<http://semver.org/>.
+“版本”（version）的说明见 SemVer 规范 `v2.0.0` <http://semver.org/>
 
-A leading `"="` or `"v"` character is stripped off and ignored.
+版本开头的 `"="` 或 `"v"` 字符忽略并删除。
 
-## Ranges
+## 范围
 
-A `version range` is a set of `comparators` which specify versions
-that satisfy the range.
+“版本范围”（version range）是一个 “比较式” 集合，指定什么版本满足这个范围。
 
-A `comparator` is composed of an `operator` and a `version`.  The set
-of primitive `operators` is:
+“比较式”（comparator）由一个操作符与一个版本组成。基本的比较式：
 
-* `<` Less than
-* `<=` Less than or equal to
-* `>` Greater than
-* `>=` Greater than or equal to
-* `=` Equal.  If no operator is specified, then equality is assumed,
-  so this operator is optional, but MAY be included.
+* `<` 小于
+* `<=` 小于或等于
+* `>` 大于
+* `>=` 大于或等于
+* `=` 等于。如果没有操作符，视为等于。因此可以省略这个操作符。
 
-For example, the comparator `>=1.2.7` would match the versions
-`1.2.7`, `1.2.8`, `2.5.3`, and `1.3.9`, but not the versions `1.2.6`
-or `1.1.0`.
+例如，比较式 `>=1.2.7` 匹配 `1.2.7`, `1.2.8`, `2.5.3`, `1.3.9`，但是不匹配
+`1.2.6`, `1.1.0`。
 
-Comparators can be joined by whitespace to form a `comparator set`,
-which is satisfied by the **intersection** of all of the comparators
-it includes.
+多个比较式可以用空格连成一个比较式集合（comparator set），
+在这些比较式的**交集**内的版本满足这个集合。
 
-A range is composed of one or more comparator sets, joined by `||`.  A
-version matches a range if and only if every comparator in at least
-one of the `||`-separated comparator sets is satisfied by the version.
+范围是一个比较式集合或多个用 `||` 连接起来的比较式集合。一个版本满足范围，
+是当且仅当它满足了其中一个比较式集合。
 
-For example, the range `>=1.2.7 <1.3.0` would match the versions
-`1.2.7`, `1.2.8`, and `1.2.99`, but not the versions `1.2.6`, `1.3.0`,
-or `1.1.0`.
+例如，范围 `>=1.2.7 <1.3.0` 匹配 `1.2.7`, `1.2.8`, `1.2.99`，但是不匹配
+`1.2.6`, `1.3.0`, `1.1.0`。
 
-The range `1.2.7 || >=1.2.9 <2.0.0` would match the versions `1.2.7`,
-`1.2.9`, and `1.4.6`, but not the versions `1.2.8` or `2.0.0`.
+范围 `1.2.7 || >=1.2.9 <2.0.0` 匹配 `1.2.7`, `1.2.9`, `1.4.6`，但是不匹配
+`1.2.8`,  `2.0.0`。
 
-### Prerelease Tags
+### 预发布标签
 
-If a version has a prerelease tag (for example, `1.2.3-alpha.3`) then
-it will only be allowed to satisfy comparator sets if at least one
-comparator with the same `[major, minor, patch]` tuple also has a
-prerelease tag.
+如果版本有预发布标签（prerelease tag，例如 `1.2.3-alpha.3`），
+它只能满足这样的比较式集合：
+至少其中一个比较式为相同的元组（tuple）`[major, minor, patch]` 并且包含预发布标签。
 
-For example, the range `>1.2.3-alpha.3` would be allowed to match the
-version `1.2.3-alpha.7`, but it would *not* be satisfied by
-`3.4.5-alpha.9`, even though `3.4.5-alpha.9` is technically "greater
-than" `1.2.3-alpha.3` according to the SemVer sort rules.  The version
-range only accepts prerelease tags on the `1.2.3` version.  The
-version `3.4.5` *would* satisfy the range, because it does not have a
-prerelease flag, and `3.4.5` is greater than `1.2.3-alpha.7`.
+例如，对于范围 `>1.2.3-alpha.3`， `1.2.3-alpha.7` 满足，但是
+`3.4.5-alpha.9` 不满足，尽管从技术上按照 SemVer 的比较规则它比
+`1.2.3-alpha.3` 大，但是这个范围只接受在 `1.2.3` 上添加预发布标签。
+`3.4.5` 满足，因为它没有预发布标签，并且 `3.4.5` 比 `1.2.3-alpha.7` 大。
+（译注：这里添加下面表达式来帮助理解）
 
-The purpose for this behavior is twofold.  First, prerelease versions
-frequently are updated very quickly, and contain many breaking changes
-that are (by the author's design) not yet fit for public consumption.
-Therefore, by default, they are excluded from range matching
-semantics.
+```javascript
+semver.satisfies('1.2.3-alpha.7', '>1.2.3-alpha.3') // true
+semver.satisfies('3.4.5-alpha.9', '>1.2.3-alpha.3') // false
+semver.gt('3.4.5-alpha.9', '1.2.3-alpha.3')         // true
+semver.satisfies('3.4.5', '>1.2.3-alpha.3')         // true
+```
 
-Second, a user who has opted into using a prerelease version has
-clearly indicated the intent to use *that specific* set of
-alpha/beta/rc versions.  By including a prerelease tag in the range,
-the user is indicating that they are aware of the risk.  However, it
-is still not appropriate to assume that they have opted into taking a
-similar risk on the *next* set of prerelease versions.
+这样做有两个理由。一，预发布版本常常更新得比较快，并且包含许多非兼容的修改，
+不适合开放使用（作者的本意如此）。因此，默认将它们排除在范围匹配之外。
 
-#### Prerelease Identifiers
+二，选择使用预发布版本的用户，使用这种特殊的 alpha/beta/rc
+版本清楚的表明了他们的意图。通过在范围内包含预发布标签，用户明示他们知道风险。
+但是，假定他们选择继续冒险使用下一个预发布版本不合适。
 
-The method `.inc` takes an additional `identifier` string argument that
-will append the value of the string as a prerelease identifier:
+#### 预发布标识符
+
+方法 `.inc` 接受一个额外的字符串参数 `identifier`，作为预发布标识符：
 
 ```javascript
 semver.inc('1.2.3', 'prerelease', 'beta')
 // '1.2.4-beta.0'
 ```
 
-command-line example:
+命令行:
 
 ```bash
 $ semver 1.2.3 -i prerelease --preid beta
 1.2.4-beta.0
 ```
 
-Which then can be used to increment further:
+继续增大：
 
 ```bash
 $ semver 1.2.4-beta.0 -i prerelease
 1.2.4-beta.1
 ```
 
-### Advanced Range Syntax
+### 高级范围语法
 
-Advanced range syntax desugars to primitive comparators in
-deterministic ways.
+高级范围由基本比较式以特定方式组成。
 
-Advanced ranges may be combined in the same way as primitive
-comparators using white space or `||`.
+高级范围可以像基本比较式一样用空格或 `||` 组合。
 
-#### Hyphen Ranges `X.Y.Z - A.B.C`
+#### 连字符范围（Hyphen Ranges） `X.Y.Z - A.B.C`
 
-Specifies an inclusive set.
+指定一个包含集合。
 
 * `1.2.3 - 2.3.4` := `>=1.2.3 <=2.3.4`
 
-If a partial version is provided as the first version in the inclusive
-range, then the missing pieces are replaced with zeroes.
+如果第一个版本格式不完整，则它缺失的部分补为 0。
 
 * `1.2 - 2.3.4` := `>=1.2.0 <=2.3.4`
 
-If a partial version is provided as the second version in the
-inclusive range, then all versions that start with the supplied parts
-of the tuple are accepted, but nothing that would be greater than the
-provided tuple parts.
+如果第二个版本格式不完整，则以它开头的版本都接受。
 
 * `1.2.3 - 2.3` := `>=1.2.3 <2.4.0`
 * `1.2.3 - 2` := `>=1.2.3 <3.0.0`
 
-#### X-Ranges `1.2.x` `1.X` `1.2.*` `*`
+#### X 范围（X-Ranges） `1.2.x` `1.X` `1.2.*` `*`
 
-Any of `X`, `x`, or `*` may be used to "stand in" for one of the
-numeric values in the `[major, minor, patch]` tuple.
+用 `X`, `x` 或 `*` 代表元组 `[major, minor, patch]` 的某部分。
 
-* `*` := `>=0.0.0` (Any version satisfies)
-* `1.x` := `>=1.0.0 <2.0.0` (Matching major version)
-* `1.2.x` := `>=1.2.0 <1.3.0` (Matching major and minor versions)
+* `*` := `>=0.0.0` （任意版本均满足）
+* `1.x` := `>=1.0.0 <2.0.0` （匹配主版本）
+* `1.2.x` := `>=1.2.0 <1.3.0` （匹配主版本与副版本）
 
-A partial version range is treated as an X-Range, so the special
-character is in fact optional.
+格式不完整的版本按 X 范围处理，所以实际上可以省略字符 X。
 
-* `""` (empty string) := `*` := `>=0.0.0`
+* `""` （空字符串）:= `*` := `>=0.0.0`
 * `1` := `1.x.x` := `>=1.0.0 <2.0.0`
 * `1.2` := `1.2.x` := `>=1.2.0 <1.3.0`
 
-#### Tilde Ranges `~1.2.3` `~1.2` `~1`
+#### 波浪号范围（Tilde Ranges） `~1.2.3` `~1.2` `~1`
 
-Allows patch-level changes if a minor version is specified on the
-comparator.  Allows minor-level changes if not.
+比较式如果有副版本，允许改变修订版本；如果没有，允许改变副版本。
 
 * `~1.2.3` := `>=1.2.3 <1.(2+1).0` := `>=1.2.3 <1.3.0`
-* `~1.2` := `>=1.2.0 <1.(2+1).0` := `>=1.2.0 <1.3.0` (Same as `1.2.x`)
-* `~1` := `>=1.0.0 <(1+1).0.0` := `>=1.0.0 <2.0.0` (Same as `1.x`)
+* `~1.2` := `>=1.2.0 <1.(2+1).0` := `>=1.2.0 <1.3.0` （同 `1.2.x`）
+* `~1` := `>=1.0.0 <(1+1).0.0` := `>=1.0.0 <2.0.0` （同 `1.x`）
 * `~0.2.3` := `>=0.2.3 <0.(2+1).0` := `>=0.2.3 <0.3.0`
-* `~0.2` := `>=0.2.0 <0.(2+1).0` := `>=0.2.0 <0.3.0` (Same as `0.2.x`)
-* `~0` := `>=0.0.0 <(0+1).0.0` := `>=0.0.0 <1.0.0` (Same as `0.x`)
-* `~1.2.3-beta.2` := `>=1.2.3-beta.2 <1.3.0` Note that prereleases in
-  the `1.2.3` version will be allowed, if they are greater than or
-  equal to `beta.2`.  So, `1.2.3-beta.4` would be allowed, but
-  `1.2.4-beta.2` would not, because it is a prerelease of a
-  different `[major, minor, patch]` tuple.
+* `~0.2` := `>=0.2.0 <0.(2+1).0` := `>=0.2.0 <0.3.0` （同 `0.2.x`）
+* `~0` := `>=0.0.0 <(0+1).0.0` := `>=0.0.0 <1.0.0` （同 `0.x`）
+* `~1.2.3-beta.2` := `>=1.2.3-beta.2 <1.3.0` 注意 `1.2.3` 可以有预发布标签，
+  只要标签大于或等于 `beta.2`。因此 `1.2.3-beta.4` 满足，但是
+  `1.2.4-beta.2` 不满足，因为它是不同的元组 `[major, minor, patch]` 的
+  预发布标签。
 
-#### Caret Ranges `^1.2.3` `^0.2.5` `^0.0.4`
+#### 脱字符范围（Caret Ranges） `^1.2.3` `^0.2.5` `^0.0.4`
 
-Allows changes that do not modify the left-most non-zero digit in the
-`[major, minor, patch]` tuple.  In other words, this allows patch and
-minor updates for versions `1.0.0` and above, patch updates for
-versions `0.X >=0.1.0`, and *no* updates for versions `0.0.X`.
+不能改变元组 `[major, minor, patch]` 最左边的非零数字。例如，`1.0.0`
+可以更新修订版本与副版本，`0.X >=0.1.0` 可以更新修订版本，`0.0.X` 不能更新。
 
-Many authors treat a `0.x` version as if the `x` were the major
-"breaking-change" indicator.
+许多作者将 `0.x` 中的 `x` 当作非兼容更新的标志。
 
-Caret ranges are ideal when an author may make breaking changes
-between `0.2.4` and `0.3.0` releases, which is a common practice.
-However, it presumes that there will *not* be breaking changes between
-`0.2.4` and `0.2.5`.  It allows for changes that are presumed to be
-additive (but non-breaking), according to commonly observed practices.
+当作者在 `0.2.4` 与 `0.3.0` 之间作了非兼容更新，这时使用脱字符范围比较理想，
+这也是常见做法。不过这假定了从 `0.2.4` 到 `0.2.5` **不是**非兼容更新，
+以用于兼容性更新。
 
 * `^1.2.3` := `>=1.2.3 <2.0.0`
 * `^0.2.3` := `>=0.2.3 <0.3.0`
 * `^0.0.3` := `>=0.0.3 <0.0.4`
-* `^1.2.3-beta.2` := `>=1.2.3-beta.2 <2.0.0` Note that prereleases in
-  the `1.2.3` version will be allowed, if they are greater than or
-  equal to `beta.2`.  So, `1.2.3-beta.4` would be allowed, but
-  `1.2.4-beta.2` would not, because it is a prerelease of a
-  different `[major, minor, patch]` tuple.
-* `^0.0.3-beta` := `>=0.0.3-beta <0.0.4`  Note that prereleases in the
-  `0.0.3` version *only* will be allowed, if they are greater than or
-  equal to `beta`.  So, `0.0.3-pr.2` would be allowed.
+* `^1.2.3-beta.2` := `>=1.2.3-beta.2 <2.0.0` 注意 `1.2.3` 可以有预发布标签，
+  只要标签大于或等于 `beta.2`。因此，`1.2.3-beta.4` 满足，但是
+  `1.2.4-beta.2` 不满足，因为它是不同的元组 `[major, minor, patch]` 的
+  预发布标签。
+* `^0.0.3-beta` := `>=0.0.3-beta <0.0.4` 注意只能用 `0.0.3` 预发布版本，只要
+  标签大于或等于 `beta`。因此，`0.0.3-pr.2` 不满足。
 
-When parsing caret ranges, a missing `patch` value desugars to the
-number `0`, but will allow flexibility within that value, even if the
-major and minor versions are both `0`.
+在解析脱字符范围时，缺失的 `patch` 补为 0，不过它可以变，
+即使主版本与副版本都为 `0`。
 
 * `^1.2.x` := `>=1.2.0 <2.0.0`
 * `^0.0.x` := `>=0.0.0 <0.1.0`
 * `^0.0` := `>=0.0.0 <0.1.0`
 
-A missing `minor` and `patch` values will desugar to zero, but also
-allow flexibility within those values, even if the major version is
-zero.
+`minor` 和 `patch` 都缺失时都补为 0，同样的两者都可以变，即使主版本为 `0`。
 
 * `^1.x` := `>=1.0.0 <2.0.0`
 * `^0.x` := `>=0.0.0 <1.0.0`
 
-### Range Grammar
+### 范围语法
 
-Putting all this together, here is a Backus-Naur grammar for ranges,
-for the benefit of parser authors:
+为方便解析器作者，在下面列出范围的 Backus-Naur 语法：
 
 ```bnf
 range-set  ::= range ( logical-or range ) *
@@ -281,80 +249,68 @@ parts      ::= part ( '.' part ) *
 part       ::= nr | [-0-9A-Za-z]+
 ```
 
-## Functions
+## 函数
 
-All methods and classes take a final `loose` boolean argument that, if
-true, will be more forgiving about not-quite-valid semver strings.
-The resulting output will always be 100% strict, of course.
+所有的方法与类都可以接受最后一个参数 `loose`，如果它为 `true`,
+可以解析不怎么严格的版本。当然处理的结果始终是 100% 严格的语义化版本。
 
-Strict-mode Comparators and Ranges will be strict about the SemVer
-strings that they parse.
+严格模式的比较式与范围严格地解析版本。
 
-* `valid(v)`: Return the parsed version, or null if it's not valid.
-* `inc(v, release)`: Return the version incremented by the release
-  type (`major`,   `premajor`, `minor`, `preminor`, `patch`,
-  `prepatch`, or `prerelease`), or null if it's not valid
-  * `premajor` in one call will bump the version up to the next major
-    version and down to a prerelease of that major version.
-    `preminor`, and `prepatch` work the same way.
-  * If called from a non-prerelease version, the `prerelease` will work the
-    same as `prepatch`. It increments the patch version, then makes a
-    prerelease. If the input version is already a prerelease it simply
-    increments it.
-* `prerelease(v)`: Returns an array of prerelease components, or null
-  if none exist. Example: `prerelease('1.2.3-alpha.1') -> ['alpha', 1]`
-* `major(v)`: Return the major version number.
-* `minor(v)`: Return the minor version number.
-* `patch(v)`: Return the patch version number.
+* `valid(v)`: 返回解析后的版本，无效的返回 `null`。
+* `inc(v, release)`: 根据 release 类型（`major`, `premajor`,
+  `minor`, `preminor`, `patch`, `prepatch`, 或 `prerelease`）返回增大的版本，
+  无效的返回 `null`。
+  * `premajor` 增大到下一个主版本，然后生成一个预发布版本。
+    `preminor` 与 `prepatch` 同理。
+  * 如果不是预发布版本，`prerelease` 的效果同 `prepatch`，
+    增大修订版本，然后生成一个预发布版本。如果已是预发布版本，只增大修订版本。
+* `prerelease(v)`: 返回一个数组，包含预发布版本组成部分。如果预发布版本则返回 null。
+  例如： `prerelease('1.2.3-alpha.1') -> ['alpha', 1]`
+* `major(v)`: 返回主版本。
+* `minor(v)`: 返回副版本。
+* `patch(v)`: 返回修订版本。
 
-### Comparison
+### 比较
 
 * `gt(v1, v2)`: `v1 > v2`
 * `gte(v1, v2)`: `v1 >= v2`
 * `lt(v1, v2)`: `v1 < v2`
 * `lte(v1, v2)`: `v1 <= v2`
-* `eq(v1, v2)`: `v1 == v2` This is true if they're logically equivalent,
-  even if they're not the exact same string.  You already know how to
-  compare strings.
-* `neq(v1, v2)`: `v1 != v2` The opposite of `eq`.
-* `cmp(v1, comparator, v2)`: Pass in a comparison string, and it'll call
-  the corresponding function above.  `"==="` and `"!=="` do simple
-  string comparison, but are included for completeness.  Throws if an
-  invalid comparison string is provided.
-* `compare(v1, v2)`: Return `0` if `v1 == v2`, or `1` if `v1` is greater, or `-1` if
-  `v2` is greater.  Sorts in ascending order if passed to `Array.sort()`.
-* `rcompare(v1, v2)`: The reverse of compare.  Sorts an array of versions
-  in descending order when passed to `Array.sort()`.
-* `diff(v1, v2)`: Returns difference between two versions by the release type
-  (`major`, `premajor`, `minor`, `preminor`, `patch`, `prepatch`, or `prerelease`),
-  or null if the versions are the same.
+* `eq(v1, v2)`: `v1 == v2` 如果它们逻辑上相等则结果为 `true`，即使它们不是
+  相同的字符串。你知道怎么比较字符串。
+* `neq(v1, v2)`: `v1 != v2` 是 `eq` 的否定。
+* `cmp(v1, comparator, v2)`: 传入一个比较符，调用上述相应的函数。
+  `"==="` 和 `"!=="` 只是简单的对比字符串，包含它们只是为了完整性。
+  如果传入无效的比较符则抛出异常。
+* `compare(v1, v2)`: 如果 `v1 == v2` 返回 `0`, 如果 `v1` 更大返回 `1`,
+  如果 `v2` 更大返回 `-1`。如果传入 `Array.sort()` 则数组升序排列。
+* `rcompare(v1, v2)`: 颠倒 `compare` 的结果。如果传入 `Array.sort()` 则数组降序排列。
+* `diff(v1, v2)`: 根据 release 的类型（`major`, `premajor`, `minor`, `preminor`,
+  `patch`, `prepatch` 或 `prerelease`）返回两个版本的不同部分。
+  如果两者相同返回 null。
 
+### 范围
 
-### Ranges
+* `validRange(range)`: 返回有效的范围，无效的返回 `null`。
+* `satisfies(version, range)`: 返回 `true` 若版本满足范围。
+* `maxSatisfying(versions, range)`: 返回所有满足范围的版本当中最大的一个，
+  如果没有则返回 `null`。
+* `minSatisfying(versions, range)`: 返回所有满足范围的版本当中最小的一个，
+  如果没有则返回 `null`。
+* `gtr(version, range)`: 返回 `true` 若版本大于所有满足范围的版本。
+* `ltr(version, range)`: 返回 `true` 若版本小于所有满足范围的版本。
+* `outside(version, range, hilo)`: 返回 `true` 若版本在范围的边界外。
+  参数 `hilo` 必须是 `'>'` 或 `'<'`，它会调用相应的函数 `gtr` 或 `ltr`。
 
-* `validRange(range)`: Return the valid range or null if it's not valid
-* `satisfies(version, range)`: Return true if the version satisfies the
-  range.
-* `maxSatisfying(versions, range)`: Return the highest version in the list
-  that satisfies the range, or `null` if none of them do.
-* `minSatisfying(versions, range)`: Return the lowest version in the list
-  that satisfies the range, or `null` if none of them do.
-* `gtr(version, range)`: Return `true` if version is greater than all the
-  versions possible in the range.
-* `ltr(version, range)`: Return `true` if version is less than all the
-  versions possible in the range.
-* `outside(version, range, hilo)`: Return true if the version is outside
-  the bounds of the range in either the high or low direction.  The
-  `hilo` argument must be either the string `'>'` or `'<'`.  (This is
-  the function called by `gtr` and `ltr`.)
+注意，范围可能是不连续的，因而版本可能既不大于范围，也不小于范围，也不满足范围！
+例如，范围 `1.2 <1.2.9 || >2.0.0` 缺漏 `1.2.9` 到 `2.0.0`，`1.2.10` 不大于
+范围（更高的 `2.0.1` 满足），不小于范围（更低的 `1.2.8` 满足），也不满足范围。
 
-Note that, since ranges may be non-contiguous, a version might not be
-greater than a range, less than a range, *or* satisfy a range!  For
-example, the range `1.2 <1.2.9 || >2.0.0` would have a hole from `1.2.9`
-until `2.0.0`, so the version `1.2.10` would not be greater than the
-range (because `2.0.1` satisfies, which is higher), nor less than the
-range (since `1.2.8` satisfies, which is lower), and it also does not
-satisfy the range.
+如果你想知道版本是否满足范围，使用 `satisfies(version, range)` 测试。
 
-If you want to know if a version satisfies or does not satisfy a
-range, use the `satisfies(version, range)` function.
+## 翻译
+
+[本文](https://github.com/npm/node-semver#readme) 由 [Ivan Yan](http://yanxyz.net/) 翻译，
+译文采用<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">知识共享署名-非商业性使用-相同方式共享 4.0 国际许可协议</a>。
+
+译文[更新](update.md)，意见[反馈](https://github.com/hongfanqie/node-semver/issues)。
